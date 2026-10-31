@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+soundmirror/__init__.py
+soundmirror/audio.py
+soundmirror/bluetooth.py
+soundmirror/main.py
+soundmirror/window.py
+soundmirror.egg-info/PKG-INFO
+soundmirror.egg-info/SOURCES.txt
+soundmirror.egg-info/dependency_links.txt
+soundmirror.egg-info/entry_points.txt
+soundmirror.egg-info/requires.txt
+soundmirror.egg-info/top_level.txt
