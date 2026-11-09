@@ -60,14 +60,19 @@ ln -sf "$(pwd)/target/release/soundmirror" ~/.local/bin/soundmirror
 1. Connect both of your Bluetooth headsets (e.g. AirPods) using Ubuntu's native Bluetooth Settings.
 2. Launch SoundMirror (`soundmirror`). Any connected headsets automatically show up in the list in real-time.
 3. Toggle **Mirror output to both headsets**.
+4. If you notice clock drift or buffer delay between headsets after extended playback, click **Fix Delay** to immediately resync both audio streams live.
 
-This creates a PulseAudio combined sink (`module-combine-sink`) that writes to
-both A2DP sinks simultaneously and sets it as the default output.
+This creates a PulseAudio combined sink (`module-combine-sink`) configured with `adjust_time=1` to actively resynchronize clock drift every 1 second.
+
+## Features
+
+- **Automatic Live Headset Detection:** Detects newly connected or disconnected Bluetooth headsets in real time.
+- **Independent Volume & Mute:** Adjust each person's listening volume separately or mute individually.
+- **Fix Delay / Live Resync:** One-click buffer flush that eliminates accumulated A2DP latency drift on the fly without stopping playback.
+- **Native Rust & GTK4 / Libadwaita:** Lightning-fast launch, low memory usage, and native Ubuntu GNOME design.
 
 ## Caveats
 
-- **Latency / drift:** The two headsets are independent clocks, so audio can
-  drift out of sync over time. There is no perfect fix in userspace.
 - **A2DP only:** Headset/HFP mode (microphone) uses a different profile and
   won't be mirrored this way.
 - **PipeWire:** Ubuntu 24.04+ may use PipeWire, which does not support

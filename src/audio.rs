@@ -114,6 +114,7 @@ pub fn load_combine_sink(slave_a: &str, slave_b: &str) -> Result<String, String>
     let slaves_arg = format!("slaves={},{}", slave_a, slave_b);
     let name_arg = format!("sink_name={}", COMBINED_SINK_NAME);
     let desc_arg = "sink_properties=device.description=SoundMirror-Combined";
+    let adjust_arg = "adjust_time=1"; // Actively resync clocks every 1s instead of default 20s
 
     run_pactl(&[
         "load-module",
@@ -121,9 +122,23 @@ pub fn load_combine_sink(slave_a: &str, slave_b: &str) -> Result<String, String>
         &slaves_arg,
         &name_arg,
         desc_arg,
+        adjust_arg,
     ])?;
 
     Ok(COMBINED_SINK_NAME.to_string())
+}
+
+pub fn resync_sinks(slave_a: &str, slave_b: &str) -> Result<(), String> {
+    // Suspend sinks momentarily to flush any buffer lag/drift, then immediately resume
+    let _ = run_pactl(&["suspend-sink", slave_a, "1"]);
+    let _ = run_pactl(&["suspend-sink", slave_b, "1"]);
+    let _ = run_pactl(&["suspend-sink", COMBINED_SINK_NAME, "1"]);
+
+    let _ = run_pactl(&["suspend-sink", COMBINED_SINK_NAME, "0"]);
+    let _ = run_pactl(&["suspend-sink", slave_a, "0"]);
+    let _ = run_pactl(&["suspend-sink", slave_b, "0"]);
+
+    Ok(())
 }
 
 pub fn unload_combine_sink() -> Result<(), String> {

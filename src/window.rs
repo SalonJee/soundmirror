@@ -16,6 +16,7 @@ pub struct WindowState {
     pub status_label: gtk4::Label,
     pub mirror_subtitle: gtk4::Label,
     pub switch_mirror: gtk4::Switch,
+    pub btn_resync: gtk4::Button,
     pub device_list: gtk4::ListBox,
     pub log_label: gtk4::Label,
     pub combined_sink: Option<String>,
@@ -241,6 +242,7 @@ impl WindowState {
             Ok(name) => {
                 let _ = audio::set_default_sink(&name);
                 self.combined_sink = Some(name.clone());
+                self.btn_resync.set_sensitive(true);
                 self.log(
                     &format!("Mirroring to {} + {} (default sink: {})", a, b, name),
                     false,
@@ -249,11 +251,13 @@ impl WindowState {
             Err(e) => {
                 self.log(&e, true);
                 self.switch_mirror.set_active(false);
+                self.btn_resync.set_sensitive(false);
             }
         }
     }
 
     pub fn disable_mirror(&mut self) {
+        self.btn_resync.set_sensitive(false);
         match audio::unload_combine_sink() {
             Ok(_) => {
                 let sinks = audio::sink_names();
@@ -269,6 +273,31 @@ impl WindowState {
             Err(e) => {
                 self.log(&e, true);
             }
+        }
+    }
+
+    pub fn resync_audio(&mut self) {
+        if !audio::is_combined_loaded() {
+            self.log("Mirroring is not active.", false);
+            return;
+        }
+
+        let sinks = audio::sink_names();
+        let candidates: Vec<String> = sinks
+            .into_iter()
+            .filter(|s| {
+                s != audio::COMBINED_SINK_NAME
+                    && (s.to_lowercase().contains("bluez") || s.to_lowercase().contains("a2dp"))
+            })
+            .collect();
+
+        if candidates.len() >= 2 {
+            match audio::resync_sinks(&candidates[0], &candidates[1]) {
+                Ok(_) => self.log("Live resync complete! Buffer delay flushed.", false),
+                Err(e) => self.log(&format!("Resync failed: {}", e), true),
+            }
+        } else {
+            self.log("Could not find both Bluetooth sinks to resync.", true);
         }
     }
 }
@@ -345,8 +374,17 @@ pub fn build_window(app: &adw::Application) -> adw::ApplicationWindow {
     mirror_info.append(&mirror_title);
     mirror_info.append(&mirror_subtitle);
 
+    let btn_resync = gtk4::Button::builder()
+        .label("Fix Delay")
+        .icon_name("media-seek-forward-symbolic")
+        .tooltip_text("Live resync: flushes audio buffer lag and synchronizes headsets")
+        .sensitive(false)
+        .valign(gtk4::Align::Center)
+        .build();
+
     mirror_box.append(&switch_mirror);
     mirror_box.append(&mirror_info);
+    mirror_box.append(&btn_resync);
     root_box.append(&mirror_box);
 
     // Log label
@@ -365,6 +403,7 @@ pub fn build_window(app: &adw::Application) -> adw::ApplicationWindow {
         status_label,
         mirror_subtitle,
         switch_mirror: switch_mirror.clone(),
+        btn_resync: btn_resync.clone(),
         device_list,
         log_label,
         combined_sink: None,
@@ -383,6 +422,12 @@ pub fn build_window(app: &adw::Application) -> adw::ApplicationWindow {
         state_refresh.borrow_mut().update_adapter_status();
         state_refresh.borrow_mut().refresh_devices();
         state_refresh.borrow().log("Device list refreshed.", false);
+    });
+
+    // Fix Delay button event
+    let state_resync = Rc::clone(&state);
+    btn_resync.connect_clicked(move |_| {
+        state_resync.borrow_mut().resync_audio();
     });
 
     // Mirror toggle event
