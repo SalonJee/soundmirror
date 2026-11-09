@@ -1,0 +1,12 @@
+[package]
+name = "soundmirror"
+version = "0.2.0"
+edition = "2021"
+description = "Mirror audio output to two Bluetooth headsets on Ubuntu"
+
+[dependencies]
+gtk4 = { version = "0.9", features = ["v4_14"] }
+libadwaita = { version = "0.7", features = ["v1_5"] }
+glib = "0.20"
+zbus = { version = "4", features = ["blocking"] }
+regex = "1.10"

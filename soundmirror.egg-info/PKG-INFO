@@ -1,7 +1,0 @@
-Metadata-Version: 2.4
-Name: soundmirror
-Version: 0.1.0
-Summary: Mirror audio output to two Bluetooth headsets (e.g. AirPods) on Ubuntu
-Requires-Python: >=3.10
-Requires-Dist: PyGObject
-Requires-Dist: dbus-python

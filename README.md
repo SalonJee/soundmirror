@@ -3,20 +3,24 @@
 Desktop app for Ubuntu that mirrors audio output to two Bluetooth headsets
 (e.g. two pairs of AirPods) at the same time.
 
+## How it feels to use it
+
+![How it feels to use it](assets/screenshot.png)
+
 ## Requirements
 
 - Ubuntu (tested on 22.04/24.04)
-- Python 3.10+
-- `python3-gi`, `python3-dbus`, `libadwaita-1`
-- PulseAudio (module-combine-sink) — PipeWire is not supported by this version
+- Rust toolchain (`rustc`, `cargo`)
+- `libgtk-4-dev`, `libadwaita-1-dev`
+- PulseAudio (module-combine-sink)
 
 Install deps:
 
 ```bash
-sudo apt install python3-gi python3-dbus libadwaita-1-0 gir1.2-adw-1 pulseaudio
+sudo apt install libgtk-4-dev libadwaita-1-dev pulseaudio
 ```
 
-## Setup & Run
+## Build & Run
 
 1. Clone and enter the repository:
 ```bash
@@ -24,34 +28,32 @@ git clone <this-repo> soundmirror
 cd soundmirror
 ```
 
-2. Create virtual environment with system site packages (needed for `gi` and `dbus`):
+2. Build optimized release binary:
 ```bash
-python3 -m venv --system-site-packages .venv
-source .venv/bin/activate
-pip install -e .
+cargo build --release
 ```
 
 3. Run the app:
 ```bash
-soundmirror
+cargo run --release
 ```
 
-### (Optional) Run from anywhere without activating the venv
+### (Optional) Install to `~/.local/bin` to run from anywhere
 
-Symlink the executable to `~/.local/bin` so you can launch `soundmirror` from any terminal:
+Symlink the release binary into your user binary path:
 
 ```bash
 mkdir -p ~/.local/bin
-ln -sf "$(pwd)/.venv/bin/soundmirror" ~/.local/bin/soundmirror
+ln -sf "$(pwd)/target/release/soundmirror" ~/.local/bin/soundmirror
 ```
 
 **What this command does:**
-- `mkdir -p ~/.local/bin`: Ensures the `~/.local/bin` folder exists in your home directory (creating parent folders if necessary without throwing errors).
+- `mkdir -p ~/.local/bin`: Ensures the `~/.local/bin` folder exists in your home directory.
 - `ln -sf <target> <link_name>`:
   - `ln`: Creates a link between files.
-  - `-s` (symbolic): Creates a soft shortcut/symlink (pointing to the original file) rather than copying it.
-  - `-f` (force): Overwrites any existing link with that name if one already exists.
-- **Why it works without activating `.venv`:** The generated `soundmirror` script contains a shebang header (`#!/.../.venv/bin/python3`) that automatically tells Linux to execute it using the virtual environment's Python interpreter. As long as `~/.local/bin` is in your `$PATH`, you can simply run `soundmirror` from any directory.
+  - `-s` (symbolic): Creates a soft shortcut/symlink pointing to the original file.
+  - `-f` (force): Automatically overwrites any existing link with that name.
+- As long as `~/.local/bin` is in your `$PATH`, you can simply run `soundmirror` from any directory without any runtime dependencies.
 
 ## How it works
 
